@@ -3,6 +3,7 @@ package com.hedley.statistics.entity;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "Stocks", indexes = { @Index(name = "ticker_idx", columnList = "ticker") })
@@ -18,13 +19,16 @@ public class Stock {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "ticker", unique = true)
+    @Column(name = "ticker")
     private String ticker;
 
-    @Column(name = "company", unique = true)
+    @Column(name = "company")
     private String company;
 
     @Column(name = "value")
     private Double value;
+
+    @Column(name = "period")
+    private LocalDate period;
 
 }
