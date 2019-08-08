@@ -39,7 +39,7 @@ public class StockController {
     public Single<ResponseEntity<StockDto>> getByTicker(@PathVariable(value = "ticker") String ticker) {
         return this.stockService.findByTicker(ticker)
                 .subscribeOn(Schedulers.io())
-                .map(opt -> ResponseEntity.of(opt.map(this::toDto).toOptional()));
+                .map(opt -> ResponseEntity.of(opt.map(this::toDto)));
     }
 
     @GetMapping(
@@ -49,7 +49,7 @@ public class StockController {
     public Single<ResponseEntity<StockDto>> getByCompany(@PathVariable(value = "company") String company) {
         return this.stockService.findByCompany(company)
                 .subscribeOn(Schedulers.io())
-                .map(opt -> ResponseEntity.of(opt.map(this::toDto).toOptional()));
+                .map(opt -> ResponseEntity.of(opt.map(this::toDto)));
     }
 
     @GetMapping(
@@ -59,6 +59,14 @@ public class StockController {
         return this.stockService.findAll()
                 .subscribeOn(Schedulers.io())
                 .map(list -> ResponseEntity.ok(list.stream().map(this::toDto).collect(Collectors.toList())));
+    }
+
+    @GetMapping(
+            value = "/ma100/{ticker}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public Single<ResponseEntity<Double>> getMA100(@PathVariable(value = "ticker") String ticker) {
+        return this.stockService.ma100().subscribeOn(Schedulers.computation()).map(ResponseEntity::ok);
     }
 
     // vavr-json later on

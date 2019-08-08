@@ -3,10 +3,11 @@ package com.hedley.statistics.service.stock;
 import com.google.common.collect.Lists;
 import com.hedley.statistics.dto.StockDto;
 import com.hedley.statistics.entity.Stock;
+import com.hedley.statistics.functions.SimpleFunctionsObject;
 import com.hedley.statistics.repository.StockRepository;
-import io.vavr.control.Option;
+import io.vavr.Function1;
 import io.vavr.control.Try;
-import org.springframework.beans.BeanUtils;
+import lombok.var;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Lazy;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import rx.Completable;
 import rx.Single;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 @Service
@@ -39,8 +41,6 @@ public class StockServiceImpl implements StockService {
         );
     }
 
-    private Lazy<Function<StockDto, Stock>> save = Lazy.of((StockDto stock) -> repository.save(convert(stock)));
-
     @Override
     public Completable deleteStock(String ticker) {
         return Completable.create(subscriber ->
@@ -60,18 +60,30 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public Single<Option<Stock>> findByTicker(String ticker) {
-        return Single.create(subscriber -> subscriber.onSuccess(Option.some(this.repository.findByTicker(ticker))));
+    public Single<Optional<Stock>> findByTicker(String ticker) {
+        return Single.create(subscriber -> subscriber.onSuccess(Optional.ofNullable(this.repository.findByTicker(ticker))));
     }
 
     @Override
-    public Single<Option<Stock>> findByCompany(String company) {
-        return Single.create(subscriber -> subscriber.onSuccess(Option.some(this.repository.findByCompany(company))));
+    public Single<Optional<Stock>> findByCompany(String company) {
+        return Single.create(subscriber -> subscriber.onSuccess(Optional.ofNullable(this.repository.findByCompany(company))));
     }
 
     @Override
     public Single<List<Stock>> findByValue(Double price) {
         return Single.create(subscriber -> subscriber.onSuccess(Lists.newArrayList(this.repository.findByValue(price))));
+    }
+
+    private Function1<Void, List<Stock>> list = aVoid -> this.repository.findAll();
+
+    private Function1<List<Stock>, Function1<Integer, Double>> curriedMovingAverage =
+            SimpleFunctionsObject.movingAverage.curried();
+
+    private Function1<Void, Function<Integer, Double>> ma = this.list.andThen(this.curriedMovingAverage);
+
+    @Override
+    public Single<Double> ma100() {
+        return Single.create(subscriber -> subscriber.onSuccess(this.ma.apply(null).apply(100)));
     }
 
     private Stock convert(StockDto dto) {
